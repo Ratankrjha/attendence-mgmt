@@ -96,39 +96,32 @@ const AttendanceHistory = () => {
                 No attendance records found for these filters.
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Year</th>
-                      <th className="px-4 py-3">Class</th>
-                      <th className="px-4 py-3">Section</th>
-                      <th className="px-4 py-3">Present</th>
-                      <th className="px-4 py-3">Absent</th>
-                      <th className="px-4 py-3">Half Day</th>
-                      <th className="px-4 py-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {records.map((r) => (
-                      <tr key={r._id} className="border-t border-slate-100 hover:bg-slate-50">
-                        <td className="px-4 py-3">{formatDate(r.date)}</td>
-                        <td className="px-4 py-3">{r.year}</td>
-                        <td className="px-4 py-3">{r.className}</td>
-                        <td className="px-4 py-3">{r.section}</td>
-                        <td className="px-4 py-3 text-emerald-600">{r.summary?.present}</td>
-                        <td className="px-4 py-3 text-rose-600">{r.summary?.absent}</td>
-                        <td className="px-4 py-3 text-amber-600">{r.summary?.halfDay}</td>
-                        <td className="px-4 py-3 text-right">
-                          <button onClick={() => setSelected(r)} className="text-xs font-medium text-brand-600 hover:underline">
-                            View / Print
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-3">
+                {records.map((r) => (
+                  <button
+                    key={r._id}
+                    onClick={() => setSelected(r)}
+                    className="flex w-full flex-col gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-800">{formatDate(r.date)}</p>
+                      <p className="text-xs text-slate-400">
+                        {r.year} · {r.className} · Section {r.section}
+                      </p>
+                    </div>
+                    <div className="flex gap-4 text-sm">
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-600">
+                        {r.summary?.present} Present
+                      </span>
+                      <span className="rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-600">
+                        {r.summary?.absent} Absent
+                      </span>
+                      <span className="rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-600">
+                        {r.summary?.halfDay} Half Day
+                      </span>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </>
