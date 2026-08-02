@@ -16,6 +16,7 @@ import {
   STATUSES,
   STATUS_COLORS,
   STATUS_ACTIVE_COLORS,
+  STATUS_CARD_COLORS,
 } from "../utils/rollNumbers";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -371,7 +372,7 @@ const MarkAttendance = () => {
             <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {rollNumbers.map((rn) => (
-                  <div key={rn} className="rounded-xl border border-slate-200 p-3">
+                  <div key={rn} className={`rounded-xl border p-3 transition-colors ${STATUS_CARD_COLORS[records[rn]]}`}>
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-sm font-semibold text-slate-700">{rn}</span>
                       <span

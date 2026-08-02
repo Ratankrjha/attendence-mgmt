@@ -45,7 +45,6 @@ export const CLASSES = ["CSE", "CSE(AI)", "IT", "ECE", "EEE", "Mechanical", "Civ
 export const SECTIONS = ["A", "B", "C", "D", "E", "F"];
 
 export const STATUSES = ["Present", "Absent", "Half Day"];
-
 export const STATUS_COLORS = {
   Present: "bg-emerald-100 text-emerald-700 border-emerald-300",
   Absent: "bg-rose-100 text-rose-700 border-rose-300",
@@ -56,4 +55,11 @@ export const STATUS_ACTIVE_COLORS = {
   Present: "bg-emerald-600 text-white border-emerald-600",
   Absent: "bg-rose-600 text-white border-rose-600",
   "Half Day": "bg-amber-500 text-white border-amber-500",
+};
+
+// Card-level tint so each roll number card visually reflects its status
+export const STATUS_CARD_COLORS = {
+  Present: "border-emerald-200 bg-emerald-50/60",
+  Absent: "border-rose-200 bg-rose-50/60",
+  "Half Day": "border-amber-200 bg-amber-50/60",
 };

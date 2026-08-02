@@ -5,7 +5,7 @@ import Topbar from "../components/Topbar";
 import Spinner from "../components/Spinner";
 import PrintReport from "../components/PrintReport";
 import api from "../api/axios";
-import { YEARS, CLASSES, SECTIONS } from "../utils/rollNumbers";
+import { YEARS, CLASSES, SECTIONS, STATUS_COLORS, STATUS_CARD_COLORS } from "../utils/rollNumbers";
 
 const AttendanceHistory = () => {
   const [filters, setFilters] = useState({ date: "", year: "", className: "", section: "", rollNumber: "" });
@@ -135,7 +135,7 @@ const AttendanceHistory = () => {
         )}
 
         {selected && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="no-print flex gap-3">
               <button onClick={() => setSelected(null)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
                 Back to list
@@ -144,6 +144,48 @@ const AttendanceHistory = () => {
                 <Printer className="h-4 w-4" /> Print Report
               </button>
             </div>
+
+            <div className="no-print rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="font-medium text-slate-800">
+                  {selected.className} · {selected.section} · {selected.year}
+                </h2>
+                <p className="text-xs text-slate-400">{formatDate(selected.date)}</p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-xl bg-slate-50 p-4">
+                  <p className="text-xs font-medium text-slate-400">Total Students</p>
+                  <p className="mt-1 text-2xl font-semibold text-slate-700">{selected.students.length}</p>
+                </div>
+                <div className="rounded-xl bg-emerald-50 p-4">
+                  <p className="text-xs font-medium text-emerald-500">Present</p>
+                  <p className="mt-1 text-2xl font-semibold text-emerald-600">{selected.summary?.present}</p>
+                </div>
+                <div className="rounded-xl bg-rose-50 p-4">
+                  <p className="text-xs font-medium text-rose-500">Absent</p>
+                  <p className="mt-1 text-2xl font-semibold text-rose-600">{selected.summary?.absent}</p>
+                </div>
+                <div className="rounded-xl bg-amber-50 p-4">
+                  <p className="text-xs font-medium text-amber-500">Half Day</p>
+                  <p className="mt-1 text-2xl font-semibold text-amber-600">{selected.summary?.halfDay}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {selected.students.map((s) => (
+                  <div key={s.rollNumber} className={`rounded-xl border p-3 ${STATUS_CARD_COLORS[s.status]}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-sm font-semibold text-slate-700">{s.rollNumber}</span>
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_COLORS[s.status]}`}>
+                        {s.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <PrintReport attendance={selected} />
           </div>
         )}
