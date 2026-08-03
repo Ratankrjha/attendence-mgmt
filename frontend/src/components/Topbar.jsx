@@ -11,14 +11,14 @@ const Topbar = ({ title }) => {
   };
 
   return (
-    <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-6 py-4 backdrop-blur">
+    <header className="no-print sticky top-0 z-30 topbar flex items-center justify-between px-6 py-4 backdrop-blur">
       <div>
-        <h1 className="text-lg font-semibold text-slate-800">{title}</h1>
-        {user && <p className="text-xs text-slate-400">{user.name} · {user.role}</p>}
+        <h1 className="text-lg font-semibold text-slate-50">{title}</h1>
+        {user && <p className="text-xs text-slate-100">{user.name} · {user.role}</p>}
       </div>
       <button
         onClick={handleLogout}
-        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        className="btn-ghost"
       >
         Logout
       </button>

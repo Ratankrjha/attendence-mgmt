@@ -199,7 +199,7 @@ const MarkAttendance = () => {
               <button
                 disabled={!canProceedStep1}
                 onClick={() => setStep(2)}
-                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40"
+                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40 btn-brand"
               >
                 Next
               </button>
@@ -231,7 +231,7 @@ const MarkAttendance = () => {
               <button
                 disabled={!canProceedStep2}
                 onClick={() => setStep(3)}
-                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40"
+                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40 btn-brand"
               >
                 Next
               </button>
@@ -263,7 +263,7 @@ const MarkAttendance = () => {
               <button
                 disabled={!canProceedStep3}
                 onClick={() => setStep(4)}
-                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40"
+                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40 btn-brand"
               >
                 Next
               </button>
@@ -295,7 +295,7 @@ const MarkAttendance = () => {
               <button
                 disabled={!canProceedStep4}
                 onClick={() => setStep(5)}
-                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40"
+                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40 btn-brand"
               >
                 Next
               </button>
@@ -352,7 +352,7 @@ const MarkAttendance = () => {
               </button>
               <button
                 onClick={generateList}
-                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white"
+                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white btn-brand"
               >
                 Generate Student List
               </button>
@@ -438,7 +438,7 @@ const MarkAttendance = () => {
               <button
                 onClick={handleSaveClick}
                 disabled={checking || saving}
-                className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+                className="flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-60 btn-brand"
               >
                 {(checking || saving) && <Spinner size="sm" />}
                 <Save className="h-4 w-4" />
@@ -456,7 +456,7 @@ const MarkAttendance = () => {
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   onClick={() => window.print()}
-                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white"
+                  className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white btn-brand"
                 >
                   <Printer className="h-4 w-4" /> Print Report
                 </button>

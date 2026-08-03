@@ -88,7 +88,7 @@ const AttendanceHistory = () => {
                 <label className="mb-1 block text-xs font-medium text-slate-500">Roll Number</label>
                 <input name="rollNumber" value={filters.rollNumber} onChange={handleFilterChange} placeholder="e.g. 12 or B4" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               </div>
-              <button type="submit" className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">
+              <button type="submit" className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white btn-brand">
                 <Search className="h-4 w-4" /> Search
               </button>
             </form>
@@ -198,7 +198,7 @@ const AttendanceHistory = () => {
                 </>
               )}
 
-              <button onClick={() => window.print()} className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">
+              <button onClick={() => window.print()} className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white btn-brand">
                 <Printer className="h-4 w-4" /> Print Report
               </button>
             </div>

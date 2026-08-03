@@ -15,7 +15,7 @@ const ConfirmDialog = ({ open, title, message, confirmLabel = "Confirm", onConfi
           </button>
           <button
             onClick={onConfirm}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 btn-brand"
           >
             {confirmLabel}
           </button>
