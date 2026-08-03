@@ -27,6 +27,19 @@ const userSchema = new mongoose.Schema(
       enum: ["Teacher", "CR"],
       required: [true, "Role is required"],
     },
+    preferences: {
+      // last used range and skip prefixes
+      lastRange: {
+        from: { type: String },
+        to: { type: String },
+        skipPrefixes: { type: String },
+        className: { type: String },
+        section: { type: String },
+        year: { type: String },
+      },
+      // saved custom roll numbers for quick reuse
+      customRollNumbers: [{ type: String }],
+    },
   },
   { timestamps: true }
 );

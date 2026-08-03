@@ -46,9 +46,14 @@ exports.saveAttendance = async (req, res, next) => {
       }
     }
 
-    const existing = await Attendance.findOne({ date, year, className, section });
+    // Prevent duplicate attendance for the same creator when CR role
+    const checkQuery = { date, year, className, section };
+    if (req.user.role === 'CR') {
+      checkQuery.markedBy = req.user._id;
+    }
+    const existing = await Attendance.findOne(checkQuery);
     if (existing) {
-      return res.status(409).json({ message: "Attendance already exists. Do not create duplicate records." });
+      return res.status(409).json({ message: "Attendance already exists for this user. Do not create duplicate records." });
     }
 
     const now = new Date();
@@ -87,6 +92,11 @@ exports.getAttendance = async (req, res, next) => {
     if (section) filter.section = section;
     if (rollNumber) filter["students.rollNumber"] = rollNumber.trim();
 
+    // CR users should only see their own records; Teachers can see all
+    if (req.user.role === 'CR') {
+      filter.markedBy = req.user._id;
+    }
+
     const records = await Attendance.find(filter)
       .sort({ date: -1, createdAt: -1 })
       .populate("markedBy", "name email role");
@@ -105,7 +115,9 @@ exports.checkAttendanceExists = async (req, res, next) => {
     if (!date || !year || !className || !section) {
       return res.status(400).json({ message: "Date, year, class and section are required" });
     }
-    const existing = await Attendance.findOne({ date, year, className, section });
+    const checkQuery = { date, year, className, section };
+    if (req.user.role === 'CR') checkQuery.markedBy = req.user._id;
+    const existing = await Attendance.findOne(checkQuery);
     res.status(200).json({ exists: !!existing, attendance: existing || null });
   } catch (err) {
     next(err);
@@ -118,6 +130,10 @@ exports.getAttendanceById = async (req, res, next) => {
     const record = await Attendance.findById(req.params.id).populate("markedBy", "name email role");
     if (!record) {
       return res.status(404).json({ message: "Attendance record not found" });
+    }
+    // Enforce that CRs can only access their own records
+    if (req.user.role === 'CR' && String(record.markedBy._id) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You do not have permission to view this attendance record' });
     }
     res.status(200).json({ record });
   } catch (err) {
@@ -139,15 +155,20 @@ exports.updateAttendance = async (req, res, next) => {
       }
     }
 
+    const existingRecord = await Attendance.findById(req.params.id);
+    if (!existingRecord) {
+      return res.status(404).json({ message: "Attendance record not found" });
+    }
+    // Only the owner (creator) can update
+    if (req.user.role === 'CR' && String(existingRecord.markedBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You do not have permission to update this attendance record' });
+    }
+
     const record = await Attendance.findByIdAndUpdate(
       req.params.id,
       { students },
       { new: true, runValidators: true }
     );
-
-    if (!record) {
-      return res.status(404).json({ message: "Attendance record not found" });
-    }
 
     res.status(200).json({ message: "Attendance updated successfully", record });
   } catch (err) {
@@ -158,10 +179,14 @@ exports.updateAttendance = async (req, res, next) => {
 // @route DELETE /api/attendance/:id (future use)
 exports.deleteAttendance = async (req, res, next) => {
   try {
-    const record = await Attendance.findByIdAndDelete(req.params.id);
-    if (!record) {
-      return res.status(404).json({ message: "Attendance record not found" });
+    const record = await Attendance.findById(req.params.id);
+    if (!record) return res.status(404).json({ message: "Attendance record not found" });
+
+    if (req.user.role === 'CR' && String(record.markedBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You do not have permission to delete this attendance record' });
     }
+
+    await Attendance.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Attendance record deleted" });
   } catch (err) {
     next(err);

@@ -77,6 +77,32 @@ exports.getProfile = async (req, res, next) => {
   }
 };
 
+// @route GET /api/auth/preferences
+exports.getPreferences = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select('preferences');
+    res.status(200).json({ preferences: user.preferences || {} });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route PUT /api/auth/preferences
+exports.updatePreferences = async (req, res, next) => {
+  try {
+    const updates = req.body || {};
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Merge preferences shallowly
+    user.preferences = Object.assign({}, user.preferences || {}, updates);
+    await user.save();
+    res.status(200).json({ preferences: user.preferences });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @route PUT /api/auth/change-password
 exports.changePassword = async (req, res, next) => {
   try {
