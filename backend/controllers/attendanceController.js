@@ -48,7 +48,7 @@ exports.saveAttendance = async (req, res, next) => {
 
     // Prevent duplicate attendance for the same creator when CR role
     const checkQuery = { date, year, className, section };
-    if (req.user.role === 'CR') {
+    if (String(req.user.role).toLowerCase() === 'cr') {
       checkQuery.markedBy = req.user._id;
     }
     const existing = await Attendance.findOne(checkQuery);
@@ -93,7 +93,7 @@ exports.getAttendance = async (req, res, next) => {
     if (rollNumber) filter["students.rollNumber"] = rollNumber.trim();
 
     // CR users should only see their own records; Teachers can see all
-    if (req.user.role === 'CR') {
+    if (String(req.user.role).toLowerCase() === 'cr') {
       filter.markedBy = req.user._id;
     }
 
@@ -116,7 +116,7 @@ exports.checkAttendanceExists = async (req, res, next) => {
       return res.status(400).json({ message: "Date, year, class and section are required" });
     }
     const checkQuery = { date, year, className, section };
-    if (req.user.role === 'CR') checkQuery.markedBy = req.user._id;
+    if (String(req.user.role).toLowerCase() === 'cr') checkQuery.markedBy = req.user._id;
     const existing = await Attendance.findOne(checkQuery);
     res.status(200).json({ exists: !!existing, attendance: existing || null });
   } catch (err) {
@@ -132,7 +132,7 @@ exports.getAttendanceById = async (req, res, next) => {
       return res.status(404).json({ message: "Attendance record not found" });
     }
     // Enforce that CRs can only access their own records
-    if (req.user.role === 'CR' && String(record.markedBy._id) !== String(req.user._id)) {
+    if (String(req.user.role).toLowerCase() === 'cr' && String(record.markedBy._id) !== String(req.user._id)) {
       return res.status(403).json({ message: 'You do not have permission to view this attendance record' });
     }
     res.status(200).json({ record });
@@ -160,7 +160,7 @@ exports.updateAttendance = async (req, res, next) => {
       return res.status(404).json({ message: "Attendance record not found" });
     }
     // Only the owner (creator) can update
-    if (req.user.role === 'CR' && String(existingRecord.markedBy) !== String(req.user._id)) {
+    if (String(req.user.role).toLowerCase() === 'cr' && String(existingRecord.markedBy) !== String(req.user._id)) {
       return res.status(403).json({ message: 'You do not have permission to update this attendance record' });
     }
 
@@ -182,7 +182,7 @@ exports.deleteAttendance = async (req, res, next) => {
     const record = await Attendance.findById(req.params.id);
     if (!record) return res.status(404).json({ message: "Attendance record not found" });
 
-    if (req.user.role === 'CR' && String(record.markedBy) !== String(req.user._id)) {
+    if (String(req.user.role).toLowerCase() === 'cr' && String(record.markedBy) !== String(req.user._id)) {
       return res.status(403).json({ message: 'You do not have permission to delete this attendance record' });
     }
 
