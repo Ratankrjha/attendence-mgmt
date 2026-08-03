@@ -36,6 +36,8 @@ const MarkAttendance = () => {
 
   const [records, setRecords] = useState({}); // { rollNumber: status }
   const [manualRoll, setManualRoll] = useState("");
+  // Saved custom rolls for the current user
+  const [customRolls, setCustomRolls] = useState([]);
   // One-time, comma-separated prefixes to skip when generating the roll list (e.g. "O, X")
   const [skipPrefixes, setSkipPrefixes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -44,6 +46,30 @@ const MarkAttendance = () => {
   const [savedAttendance, setSavedAttendance] = useState(null);
 
   const rollNumbers = useMemo(() => Object.keys(records), [records]);
+
+  // Load user preferences (last range and saved custom rolls) on mount
+  useEffect(() => {
+    const loadPrefs = async () => {
+      try {
+        const res = await api.get('/auth/preferences');
+        const prefs = res.data.preferences || {};
+        if (prefs.lastRange) {
+          setRollFrom(prefs.lastRange.from || '');
+          setRollTo(prefs.lastRange.to || '');
+          setSkipPrefixes(prefs.lastRange.skipPrefixes || '');
+          if (prefs.lastRange.className) setClassName(prefs.lastRange.className);
+          if (prefs.lastRange.section) setSection(prefs.lastRange.section);
+          if (prefs.lastRange.year) setYear(prefs.lastRange.year);
+        }
+        setCustomRolls(prefs.customRollNumbers || []);
+      } catch (err) {
+        // ignore silently
+      }
+    };
+    loadPrefs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const summary = useMemo(() => {
     const values = Object.values(records);
@@ -60,7 +86,7 @@ const MarkAttendance = () => {
   const canProceedStep3 = !!className;
   const canProceedStep4 = !!section;
 
-  const generateList = () => {
+  const generateList = async () => {
     if (!rollFrom.trim() || !rollTo.trim()) {
       setRangeError("Enter both a starting and ending roll number for your class.");
       return;
@@ -92,6 +118,16 @@ const MarkAttendance = () => {
       initial[rn] = "Present";
     });
     setRecords(initial);
+
+    // Save last used range to user preferences so it can be auto-filled next time
+    try {
+      await api.put('/auth/preferences', {
+        lastRange: { from: rollFrom.trim(), to: rollTo.trim(), skipPrefixes: skipPrefixes.trim(), className, section, year }
+      });
+    } catch (err) {
+      // non-fatal
+    }
+
     setStep(6);
   };
 
@@ -108,6 +144,35 @@ const MarkAttendance = () => {
     }
     setRecords((prev) => ({ ...prev, [rn]: "Present" }));
     setManualRoll("");
+  };
+
+  const saveCustomRoll = async (roll) => {
+    const r = roll || manualRoll.trim();
+    if (!r) return;
+    if (customRolls.includes(r)) {
+      toast.error('This custom roll is already saved');
+      return;
+    }
+    const updated = [...customRolls, r];
+    try {
+      const res = await api.put('/auth/preferences', { customRollNumbers: updated });
+      setCustomRolls(res.data.preferences.customRollNumbers || updated);
+      toast.success('Saved to custom rolls');
+      setManualRoll('');
+    } catch (err) {
+      toast.error('Failed to save custom roll');
+    }
+  };
+
+  const deleteCustomRoll = async (roll) => {
+    const updated = customRolls.filter((c) => c !== roll);
+    try {
+      const res = await api.put('/auth/preferences', { customRollNumbers: updated });
+      setCustomRolls(res.data.preferences.customRollNumbers || updated);
+      toast.success('Removed custom roll');
+    } catch (err) {
+      toast.error('Failed to remove custom roll');
+    }
   };
 
   const handleSaveClick = async () => {
@@ -379,13 +444,37 @@ const MarkAttendance = () => {
                     placeholder="Custom roll number"
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                   />
-                  <button
-                    onClick={addManualRoll}
-                    className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                  >
-                    <Plus className="h-4 w-4" /> Add Manual Roll Number
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={addManualRoll}
+                      className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      <Plus className="h-4 w-4" /> Add
+                    </button>
+                    <button
+                      onClick={() => saveCustomRoll()}
+                      className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      Save to My Rolls
+                    </button>
+                  </div>
                 </div>
+                <div className="w-full mt-3">
+                  {customRolls.length > 0 && (
+                    <div>
+                      <p className="text-xs text-slate-500">Saved custom rolls:</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {customRolls.map((cr) => (
+                          <div key={cr} className="rounded-md border px-2 py-1 text-sm flex items-center gap-2">
+                            <button onClick={() => { setManualRoll(cr); }} className="text-slate-700">{cr}</button>
+                            <button onClick={() => deleteCustomRoll(cr)} className="text-rose-600">Delete</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+               </div>
               </div>
             </div>
 
