@@ -6,17 +6,39 @@ const VALID_STATUSES = ["Present", "Absent", "Half Day"];
 // @desc  Save a new attendance session (blocked if one already exists for date+year+class+section)
 exports.saveAttendance = async (req, res, next) => {
   try {
-    const { date, year, className, section, crName, students } = req.body;
+    const { date, year, className, section, crName, students, skipPrefixes } = req.body;
 
     if (!date || !year || !className || !section || !crName) {
       return res.status(400).json({ message: "Date, year, class, section and CR name are required" });
     }
 
-    if (!Array.isArray(students) || students.length === 0) {
+    if (!Array.isArray(students)) {
       return res.status(400).json({ message: "At least one student record is required" });
     }
 
-    for (const s of students) {
+    // Parse skip prefixes (one-time input from client). Example: "O, X"
+    const prefixes = typeof skipPrefixes === "string" && skipPrefixes.trim()
+      ? skipPrefixes
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean)
+          .map((p) => p.toUpperCase())
+      : [];
+
+    // Filter students by prefixes (case-insensitive prefix match)
+    let filteredStudents = students;
+    if (prefixes.length) {
+      filteredStudents = students.filter((s) => {
+        const rn = String(s.rollNumber).toUpperCase();
+        return !prefixes.some((pref) => rn.startsWith(pref));
+      });
+    }
+
+    if (!Array.isArray(filteredStudents) || filteredStudents.length === 0) {
+      return res.status(400).json({ message: "At least one student record is required after applying skip prefixes" });
+    }
+
+    for (const s of filteredStudents) {
       if (!s.rollNumber || !VALID_STATUSES.includes(s.status)) {
         return res.status(400).json({
           message: `Invalid record for roll number "${s.rollNumber || "unknown"}". Status must be Present, Absent, or Half Day.`,
@@ -40,7 +62,7 @@ exports.saveAttendance = async (req, res, next) => {
       section,
       crName,
       markedBy: req.user._id,
-      students,
+      students: filteredStudents,
       createdDate,
       createdTime,
     });
