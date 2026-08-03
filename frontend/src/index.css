@@ -2,9 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Brand palette (adjust as needed) */
+  --brand-50: #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-200: #c7d2fe;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+
+  --card-bg: #ffffff; /* fallback */
+  --card-gradient-start: #ffffff;
+  --card-gradient-end: #fbfdff;
+}
+
 body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-  background-color: #f5f7fb;
+  background: linear-gradient(180deg, #f0f4ff 0%, #f7fafc 60%);
+  color: #0f172a;
+}
+
+/* Card and UI color adjustments: apply subtle tint to previously plain white cards */
+.bg-white {
+  background: linear-gradient(180deg, var(--card-gradient-start), var(--card-gradient-end));
+}
+
+/* Slightly stronger shadow and colored ring for rounded-2xl cards */
+.rounded-2xl.bg-white,
+.rounded-2xl.bg-emerald-50,
+.rounded-2xl.bg-rose-50,
+.rounded-2xl.bg-amber-50 {
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.06); /* subtle brand tint */
+}
+
+/* Buttons: brand accent variants (used alongside existing tailwind classes) */
+.btn-brand {
+  background-image: linear-gradient(90deg, var(--brand-500), var(--brand-600));
+  color: white;
+}
+
+/* Accent link color */
+.text-accent {
+  color: var(--brand-600);
+}
+
+/* Make ring-slate-100 a touch warmer */
+.ring-slate-100 {
+  box-shadow: 0 0 0 1px rgba(79,70,229,0.06) !important;
 }
 
 /* Print report styles */
