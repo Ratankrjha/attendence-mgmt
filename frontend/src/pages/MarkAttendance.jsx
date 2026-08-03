@@ -36,6 +36,8 @@ const MarkAttendance = () => {
 
   const [records, setRecords] = useState({}); // { rollNumber: status }
   const [manualRoll, setManualRoll] = useState("");
+  // One-time, comma-separated prefixes to skip when generating the roll list (e.g. "O, X")
+  const [skipPrefixes, setSkipPrefixes] = useState("");
   const [saving, setSaving] = useState(false);
   const [checking, setChecking] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -68,9 +70,25 @@ const MarkAttendance = () => {
       setRangeError(error);
       return;
     }
+
+    // Build list of prefixes (trimmed, uppercased) to skip
+    const prefixes = skipPrefixes
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => p.toUpperCase());
+
+    const filteredRolls = prefixes.length
+      ? rangeRolls.filter((rn) => {
+          // compare using uppercase for case-insensitive prefix matching
+          const u = String(rn).toUpperCase();
+          return !prefixes.some((pref) => u.startsWith(pref));
+        })
+      : rangeRolls;
+
     setRangeError("");
     const initial = {};
-    rangeRolls.forEach((rn) => {
+    filteredRolls.forEach((rn) => {
       initial[rn] = "Present";
     });
     setRecords(initial);
@@ -129,6 +147,7 @@ const MarkAttendance = () => {
         className,
         section,
         crName: user.name,
+        skipPrefixes: skipPrefixes || "",
         students,
       });
 
@@ -309,6 +328,16 @@ const MarkAttendance = () => {
                   onChange={(e) => setRollTo(e.target.value)}
                   placeholder="e.g. R7 or 60"
                   className="w-40 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-600">Skip prefixes</label>
+                <input
+                  value={skipPrefixes}
+                  onChange={(e) => setSkipPrefixes(e.target.value)}
+                  placeholder="e.g. O, X (comma-separated)"
+                  className="w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 />
               </div>
             </div>
