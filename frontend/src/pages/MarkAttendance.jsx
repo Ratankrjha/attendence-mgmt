@@ -444,35 +444,12 @@ const MarkAttendance = () => {
                     placeholder="Custom roll number"
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                   />
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={addManualRoll}
-                      className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                    >
-                      <Plus className="h-4 w-4" /> Add
-                    </button>
-                    <button
-                      onClick={() => saveCustomRoll()}
-                      className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                    >
-                      Save to My Rolls
-                    </button>
-                  </div>
-                </div>
-                <div className="w-full mt-3">
-                  {customRolls.length > 0 && (
-                    <div>
-                      <p className="text-xs text-slate-500">Saved custom rolls:</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {customRolls.map((cr) => (
-                          <div key={cr} className="rounded-md border px-2 py-1 text-sm flex items-center gap-2">
-                            <button onClick={() => { setManualRoll(cr); }} className="text-slate-700">{cr}</button>
-                            <button onClick={() => deleteCustomRoll(cr)} className="text-rose-600">Delete</button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    onClick={addManualRoll}
+                    className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    <Plus className="h-4 w-4" /> Add Manual Roll Number
+                  </button>
                 </div>
                </div>
               </div>
