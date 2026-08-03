@@ -1,5 +1,5 @@
 // Generates the predefined roll number set:
-// Numeric 1-100, then alphabetic blocks A0-A9 through Z0-Z9 (O series skipped — not used)
+// Numeric 1-100, then alphabetic blocks A0-A9 through Z0-Z9
 export const generatePredefinedRollNumbers = () => {
   const rollNumbers = [];
 
@@ -9,7 +9,6 @@ export const generatePredefinedRollNumbers = () => {
 
   for (let charCode = 65; charCode <= 90; charCode++) {
     const letter = String.fromCharCode(charCode);
-    if (letter === "O") continue; // O series is not used
     for (let n = 0; n <= 9; n++) {
       rollNumbers.push(`${letter}${n}`);
     }
