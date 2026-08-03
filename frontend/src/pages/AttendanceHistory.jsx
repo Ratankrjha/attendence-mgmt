@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Printer, Search } from "lucide-react";
+import { Printer, Search, Copy, Edit2, Trash, Check, X } from "lucide-react";
 import Topbar from "../components/Topbar";
 import Spinner from "../components/Spinner";
 import PrintReport from "../components/PrintReport";
 import api from "../api/axios";
-import { YEARS, CLASSES, SECTIONS, STATUS_COLORS, STATUS_CARD_COLORS } from "../utils/rollNumbers";
+import { YEARS, CLASSES, SECTIONS, STATUSES, STATUS_COLORS, STATUS_CARD_COLORS, STATUS_ACTIVE_COLORS } from "../utils/rollNumbers";
 
 const AttendanceHistory = () => {
   const [filters, setFilters] = useState({ date: "", year: "", className: "", section: "", rollNumber: "" });
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [localStudents, setLocalStudents] = useState([]);
+  const [savingEdits, setSavingEdits] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchRecords = async () => {
     setLoading(true);
@@ -133,6 +137,67 @@ const AttendanceHistory = () => {
               <button onClick={() => setSelected(null)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
                 Back to list
               </button>
+
+              {!editing && (
+                <>
+                  <button onClick={() => {
+                    setEditing(true);
+                    setLocalStudents(selected.students.map(s => ({ ...s })));
+                  }} className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
+                    <Edit2 className="h-4 w-4" /> Edit
+                  </button>
+
+                  <button onClick={async () => {
+                    if (!window.confirm('Delete attendance for this date? This cannot be undone.')) return;
+                    setDeleting(true);
+                    try {
+                      await api.delete(`/attendance/${selected._id}`);
+                      toast.success('Attendance deleted');
+                      setSelected(null);
+                      fetchRecords();
+                    } catch (err) {
+                      toast.error(err.response?.data?.message || 'Failed to delete attendance');
+                    } finally {
+                      setDeleting(false);
+                    }
+                  }} className="flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50">
+                    <Trash className="h-4 w-4" /> Delete
+                  </button>
+                </>
+              )}
+
+              {editing && (
+                <>
+                  <button onClick={async () => {
+                    // Save edits
+                    if (!localStudents || localStudents.length === 0) {
+                      toast.error('No students to save');
+                      return;
+                    }
+                    setSavingEdits(true);
+                    try {
+                      const res = await api.put(`/attendance/${selected._id}`, { students: localStudents });
+                      toast.success('Attendance updated');
+                      // refresh selected from server response
+                      const updated = res.data.record || res.data.attendance || null;
+                      if (updated) setSelected(updated);
+                      setEditing(false);
+                      fetchRecords();
+                    } catch (err) {
+                      toast.error(err.response?.data?.message || 'Failed to save changes');
+                    } finally {
+                      setSavingEdits(false);
+                    }
+                  }} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white">
+                    {savingEdits ? <Spinner /> : <Check className="h-4 w-4" />} Save changes
+                  </button>
+
+                  <button onClick={() => { setEditing(false); setLocalStudents([]); }} className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">
+                    <X className="h-4 w-4" /> Cancel
+                  </button>
+                </>
+              )}
+
               <button onClick={() => window.print()} className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">
                 <Printer className="h-4 w-4" /> Print Report
               </button>
@@ -151,13 +216,31 @@ const AttendanceHistory = () => {
                   <p className="text-xs font-medium text-slate-400">Total Students</p>
                   <p className="mt-1 text-2xl font-semibold text-slate-700">{selected.students.length}</p>
                 </div>
-                <div className="rounded-xl bg-emerald-50 p-4">
+                <div className="rounded-xl bg-emerald-50 p-4 relative">
                   <p className="text-xs font-medium text-emerald-500">Present</p>
                   <p className="mt-1 text-2xl font-semibold text-emerald-600">{selected.summary?.present}</p>
+                  <button onClick={() => {
+                    const present = (editing ? localStudents : selected.students).filter(s => s.status === 'Present').map(s => s.rollNumber).join(', ');
+                    if (!present) { toast('No present students to copy'); return; }
+                    navigator.clipboard?.writeText(present).then(() => toast.success('Present list copied')) .catch(() => {
+                      const ta = document.createElement('textarea'); ta.value = present; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast.success('Present list copied');
+                    });
+                  }} className="absolute right-3 top-3 text-emerald-600">
+                    <Copy className="h-4 w-4" />
+                  </button>
                 </div>
-                <div className="rounded-xl bg-rose-50 p-4">
+                <div className="rounded-xl bg-rose-50 p-4 relative">
                   <p className="text-xs font-medium text-rose-500">Absent</p>
                   <p className="mt-1 text-2xl font-semibold text-rose-600">{selected.summary?.absent}</p>
+                  <button onClick={() => {
+                    const absent = (editing ? localStudents : selected.students).filter(s => s.status === 'Absent').map(s => s.rollNumber).join(', ');
+                    if (!absent) { toast('No absent students to copy'); return; }
+                    navigator.clipboard?.writeText(absent).then(() => toast.success('Absent list copied')) .catch(() => {
+                      const ta = document.createElement('textarea'); ta.value = absent; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast.success('Absent list copied');
+                    });
+                  }} className="absolute right-3 top-3 text-rose-600">
+                    <Copy className="h-4 w-4" />
+                  </button>
                 </div>
                 <div className="rounded-xl bg-amber-50 p-4">
                   <p className="text-xs font-medium text-amber-500">Half Day</p>
@@ -166,13 +249,33 @@ const AttendanceHistory = () => {
               </div>
 
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {selected.students.map((s) => (
+                {(editing ? localStudents : selected.students).map((s, idx) => (
                   <div key={s.rollNumber} className={`rounded-xl border p-3 ${STATUS_CARD_COLORS[s.status]}`}>
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-sm font-semibold text-slate-700">{s.rollNumber}</span>
-                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_COLORS[s.status]}`}>
-                        {s.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {!editing && (
+                          <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_COLORS[s.status]}`}>
+                            {s.status}
+                          </span>
+                        )}
+
+                        {editing && (
+                          <div className="mt-0 grid grid-cols-3 gap-1.5">
+                            {STATUSES.map((st) => (
+                              <button key={st} onClick={() => {
+                                setLocalStudents(prev => {
+                                  const copy = [...prev];
+                                  copy[idx] = { ...copy[idx], status: st };
+                                  return copy;
+                                });
+                              }} className={`rounded-md border py-1 text-[11px] font-medium ${localStudents[idx]?.status === st ? STATUS_ACTIVE_COLORS[st] : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
+                                {st}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
