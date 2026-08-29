@@ -48,7 +48,6 @@ const MarkAttendance = () => {
   const availableYears = useMemo(() => [...new Set(assignedClasses.map((item) => item.year))], [assignedClasses]);
   const availableClassNames = useMemo(() => [...new Set(assignedClasses.filter((item) => item.year === year).map((item) => item.className))], [assignedClasses, year]);
   const availableSections = useMemo(() => [...new Set(assignedClasses.filter((item) => item.year === year && item.className === className).map((item) => item.section))], [assignedClasses, year, className]);
-  const selectedClassroom = useMemo(() => assignedClasses.find((item) => item.year === year && item.className === className && item.section === section), [assignedClasses, year, className, section]);
 
   // Load user preferences (last range and saved custom rolls) on mount
   useEffect(() => {
@@ -79,7 +78,7 @@ const MarkAttendance = () => {
         const res = await api.get("/classes");
         setAssignedClasses(res.data.classrooms || []);
       } catch (err) {
-        toast.error(err.response?.data?.message || "Could not load your assigned classes");
+        toast.error(err.response?.data?.message || "Could not load available classes");
       } finally {
         setClassesLoading(false);
       }
@@ -103,16 +102,6 @@ const MarkAttendance = () => {
   const canProceedStep4 = !!section;
 
   const generateList = async () => {
-    if (selectedClassroom?.students?.length) {
-      const initial = {};
-      selectedClassroom.students.forEach((student) => {
-        initial[student.rollNumber] = "Present";
-      });
-      setRangeError("");
-      setRecords(initial);
-      setStep(6);
-      return;
-    }
     if (!rollFrom.trim() || !rollTo.trim()) {
       setRangeError("Enter both a starting and ending roll number for your class.");
       return;
@@ -252,7 +241,7 @@ const MarkAttendance = () => {
     }
   };
 
-  const stepLabels = ["Date", "Year", "Class", "Section", "Range", "Roster", "Done"];
+  const stepLabels = ["Date", "Year", "Class", "Section", "Range", "Students", "Done"];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -263,7 +252,7 @@ const MarkAttendance = () => {
           <div className="mb-5 flex justify-center"><Spinner /></div>
         ) : assignedClasses.length === 0 ? (
           <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            A teacher must assign you to a class before you can mark attendance.
+            A teacher must create a class before attendance can be marked for it.
           </div>
         ) : null}
         {/* Stepper */}
@@ -405,15 +394,9 @@ const MarkAttendance = () => {
         {step === 5 && (
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
             <h2 className="font-medium text-slate-800">Which roll numbers belong to this class?</h2>
-            {selectedClassroom?.students?.length ? (
-              <p className="mt-1 text-sm text-slate-500">
-                Your teacher assigned a roster with {selectedClassroom.students.length} students. That roster will be used.
-              </p>
-            ) : (
-              <p className="mt-1 text-sm text-slate-500">
-                {className} · {section} has no saved roster yet. Enter the roll-number range for this class.
-              </p>
-            )}
+            <p className="mt-1 text-sm text-slate-500">
+              Enter the roll-number range for {className} · {section}.
+            </p>
             <div className="mt-4 flex flex-wrap items-end gap-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-600">From roll number</label>
@@ -454,11 +437,10 @@ const MarkAttendance = () => {
                 Back
               </button>
               <button
-                disabled={!selectedClassroom}
                 onClick={generateList}
-                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white btn-brand disabled:opacity-40"
+                className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white btn-brand"
               >
-                {selectedClassroom?.students?.length ? "Use Assigned Roster" : "Generate Student List"}
+                Generate Student List
               </button>
             </div>
           </div>

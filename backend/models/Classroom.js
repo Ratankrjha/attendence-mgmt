@@ -1,13 +1,5 @@
 const mongoose = require("mongoose");
 
-const studentSchema = new mongoose.Schema(
-  {
-    rollNumber: { type: String, required: true, trim: true, uppercase: true },
-    name: { type: String, trim: true, default: "" },
-  },
-  { _id: true }
-);
-
 const classroomSchema = new mongoose.Schema(
   {
     teacher: {
@@ -27,14 +19,12 @@ const classroomSchema = new mongoose.Schema(
       enum: ["A", "B", "C", "D", "E", "F"],
       required: true,
     },
-    cr: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
-    students: { type: [studentSchema], default: [] },
   },
   { timestamps: true }
 );
 
 classroomSchema.index(
-  { teacher: 1, year: 1, className: 1, section: 1 },
+  { year: 1, className: 1, section: 1 },
   { unique: true }
 );
 

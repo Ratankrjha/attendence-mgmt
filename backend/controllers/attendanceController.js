@@ -52,11 +52,10 @@ exports.saveAttendance = async (req, res, next) => {
       year,
       className,
       section,
-      cr: req.user._id,
     });
     if (!classroom) {
       return res.status(403).json({
-        message: "You are not assigned as CR for this class. Ask the teacher to assign you first.",
+        message: "This class has not been created by a teacher yet.",
       });
     }
 
@@ -145,10 +144,9 @@ exports.checkAttendanceExists = async (req, res, next) => {
       year,
       className,
       section,
-      cr: req.user._id,
     });
     if (!classroom) {
-      return res.status(403).json({ message: "You are not assigned as CR for this class" });
+      return res.status(403).json({ message: "This class has not been created by a teacher yet" });
     }
     const checkQuery = { date, classroom: classroom._id };
     const existing = await Attendance.findOne(checkQuery);

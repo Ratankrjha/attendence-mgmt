@@ -15,7 +15,7 @@ exports.getDashboard = async (req, res, next) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [classrooms, records, todayRecords] = await Promise.all([
-      Classroom.find({ teacher: req.user._id }).select("year className section students cr").populate("cr", "name"),
+      Classroom.find({ teacher: req.user._id }).select("year className section"),
       Attendance.find({ teacher: req.user._id })
         .sort({ date: -1, createdAt: -1 })
         .populate("markedBy", "name email"),
@@ -58,13 +58,12 @@ exports.getDashboard = async (req, res, next) => {
         year: classroom.year,
         className: classroom.className,
         section: classroom.section,
-        crName: classroom.cr?.name || "No CR assigned",
       }));
 
     res.status(200).json({
       stats: {
         classes: classrooms.length,
-        students: classrooms.reduce((total, classroom) => total + classroom.students.length, 0),
+        students: new Set(records.flatMap((record) => record.students.map((student) => `${record.classroom}|${student.rollNumber}`))).size,
         attendanceSessions: records.length,
         todaySessions: todayRecords.length,
         overallAttendance: attendanceRate(allStudents),

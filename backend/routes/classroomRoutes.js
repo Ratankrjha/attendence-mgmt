@@ -6,13 +6,11 @@ const {
   createClassroom,
   updateClassroom,
   deleteClassroom,
-  listCRs,
 } = require("../controllers/classroomController");
 
 const router = express.Router();
 
 router.use(protect);
-router.get("/cr-options", authorize("Teacher"), listCRs);
 router.get("/", listClassrooms);
 router.get("/:id", getClassroom);
 router.post("/", authorize("Teacher"), createClassroom);
