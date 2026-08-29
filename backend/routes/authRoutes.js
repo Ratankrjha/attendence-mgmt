@@ -5,6 +5,8 @@ const {
   register,
   login,
   getProfile,
+  getPreferences,
+  updatePreferences,
   changePassword,
 } = require("../controllers/authController");
 

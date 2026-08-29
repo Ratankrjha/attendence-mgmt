@@ -3,6 +3,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherClasses from "./pages/TeacherClasses";
+import TeacherAttendance from "./pages/TeacherAttendance";
+import TeacherReports from "./pages/TeacherReports";
+import TeacherNotifications from "./pages/TeacherNotifications";
 import CRDashboard from "./pages/CRDashboard";
 import MarkAttendance from "./pages/MarkAttendance";
 import AttendanceHistory from "./pages/AttendanceHistory";
@@ -34,6 +38,22 @@ function App() {
             <TeacherDashboard />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/teacher/classes"
+        element={<ProtectedRoute allowedRoles={["Teacher"]}><TeacherClasses /></ProtectedRoute>}
+      />
+      <Route
+        path="/teacher/attendance"
+        element={<ProtectedRoute allowedRoles={["Teacher"]}><TeacherAttendance /></ProtectedRoute>}
+      />
+      <Route
+        path="/teacher/reports"
+        element={<ProtectedRoute allowedRoles={["Teacher"]}><TeacherReports /></ProtectedRoute>}
+      />
+      <Route
+        path="/teacher/notifications"
+        element={<ProtectedRoute allowedRoles={["Teacher"]}><TeacherNotifications /></ProtectedRoute>}
       />
 
       <Route

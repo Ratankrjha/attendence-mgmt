@@ -1,4 +1,6 @@
 const Attendance = require("../models/Attendance");
+const Classroom = require("../models/Classroom");
+const Notification = require("../models/Notification");
 
 const VALID_STATUSES = ["Present", "Absent", "Half Day"];
 
@@ -6,10 +8,10 @@ const VALID_STATUSES = ["Present", "Absent", "Half Day"];
 // @desc  Save a new attendance session (blocked if one already exists for date+year+class+section)
 exports.saveAttendance = async (req, res, next) => {
   try {
-    const { date, year, className, section, crName, students, skipPrefixes } = req.body;
+    const { date, year, className, section, students, skipPrefixes } = req.body;
 
-    if (!date || !year || !className || !section || !crName) {
-      return res.status(400).json({ message: "Date, year, class, section and CR name are required" });
+    if (!date || !year || !className || !section) {
+      return res.status(400).json({ message: "Date, year, class and section are required" });
     }
 
     if (!Array.isArray(students)) {
@@ -46,12 +48,19 @@ exports.saveAttendance = async (req, res, next) => {
       }
     }
 
-    // Prevent duplicate attendance for the same creator when CR role
-    const checkQuery = { date, year, className, section };
-    if (String(req.user.role).toLowerCase() === 'cr') {
-      checkQuery.markedBy = req.user._id;
+    const classroom = await Classroom.findOne({
+      year,
+      className,
+      section,
+      cr: req.user._id,
+    });
+    if (!classroom) {
+      return res.status(403).json({
+        message: "You are not assigned as CR for this class. Ask the teacher to assign you first.",
+      });
     }
-    const existing = await Attendance.findOne(checkQuery);
+
+    const existing = await Attendance.findOne({ date, classroom: classroom._id });
     if (existing) {
       return res.status(409).json({ message: "Attendance already exists for this user. Do not create duplicate records." });
     }
@@ -65,11 +74,21 @@ exports.saveAttendance = async (req, res, next) => {
       year,
       className,
       section,
-      crName,
+      crName: req.user.name,
       markedBy: req.user._id,
+      teacher: classroom.teacher,
+      classroom: classroom._id,
       students: filteredStudents,
       createdDate,
       createdTime,
+    });
+
+    await Notification.create({
+      recipient: classroom.teacher,
+      type: "attendance_submitted",
+      title: "New attendance submitted",
+      message: `${req.user.name} submitted attendance for ${className} Section ${section} on ${date}.`,
+      attendance: attendance._id,
     });
 
     res.status(201).json({ message: "Attendance saved successfully", attendance });
@@ -83,18 +102,25 @@ exports.saveAttendance = async (req, res, next) => {
 // Query params: date, year, className, section, rollNumber
 exports.getAttendance = async (req, res, next) => {
   try {
-    const { date, year, className, section, rollNumber } = req.query;
+    const { date, fromDate, toDate, year, className, section, rollNumber } = req.query;
     const filter = {};
 
     if (date) filter.date = date;
+    else if (fromDate || toDate) {
+      filter.date = {};
+      if (fromDate) filter.date.$gte = fromDate;
+      if (toDate) filter.date.$lte = toDate;
+    }
     if (year) filter.year = year;
     if (className) filter.className = className;
     if (section) filter.section = section;
     if (rollNumber) filter["students.rollNumber"] = rollNumber.trim();
 
-    // CR users should only see their own records; Teachers can see all
+    // Users can only see data belonging to them or to their assigned classes.
     if (String(req.user.role).toLowerCase() === 'cr') {
       filter.markedBy = req.user._id;
+    } else {
+      filter.teacher = req.user._id;
     }
 
     const records = await Attendance.find(filter)
@@ -115,8 +141,16 @@ exports.checkAttendanceExists = async (req, res, next) => {
     if (!date || !year || !className || !section) {
       return res.status(400).json({ message: "Date, year, class and section are required" });
     }
-    const checkQuery = { date, year, className, section };
-    if (String(req.user.role).toLowerCase() === 'cr') checkQuery.markedBy = req.user._id;
+    const classroom = await Classroom.findOne({
+      year,
+      className,
+      section,
+      cr: req.user._id,
+    });
+    if (!classroom) {
+      return res.status(403).json({ message: "You are not assigned as CR for this class" });
+    }
+    const checkQuery = { date, classroom: classroom._id };
     const existing = await Attendance.findOne(checkQuery);
     res.status(200).json({ exists: !!existing, attendance: existing || null });
   } catch (err) {
@@ -127,13 +161,12 @@ exports.checkAttendanceExists = async (req, res, next) => {
 // @route GET /api/attendance/:id
 exports.getAttendanceById = async (req, res, next) => {
   try {
-    const record = await Attendance.findById(req.params.id).populate("markedBy", "name email role");
+    const accessFilter = String(req.user.role).toLowerCase() === "teacher"
+      ? { _id: req.params.id, teacher: req.user._id }
+      : { _id: req.params.id, markedBy: req.user._id };
+    const record = await Attendance.findOne(accessFilter).populate("markedBy", "name email role");
     if (!record) {
       return res.status(404).json({ message: "Attendance record not found" });
-    }
-    // Enforce that CRs can only access their own records
-    if (String(req.user.role).toLowerCase() === 'cr' && String(record.markedBy._id) !== String(req.user._id)) {
-      return res.status(403).json({ message: 'You do not have permission to view this attendance record' });
     }
     res.status(200).json({ record });
   } catch (err) {
@@ -155,17 +188,11 @@ exports.updateAttendance = async (req, res, next) => {
       }
     }
 
-    const existingRecord = await Attendance.findById(req.params.id);
-    if (!existingRecord) {
-      return res.status(404).json({ message: "Attendance record not found" });
-    }
-    // Only the owner (creator) can update
-    if (String(req.user.role).toLowerCase() === 'cr' && String(existingRecord.markedBy) !== String(req.user._id)) {
-      return res.status(403).json({ message: 'You do not have permission to update this attendance record' });
-    }
-
-    const record = await Attendance.findByIdAndUpdate(
-      req.params.id,
+    const accessFilter = String(req.user.role).toLowerCase() === "teacher"
+      ? { _id: req.params.id, teacher: req.user._id }
+      : { _id: req.params.id, markedBy: req.user._id };
+    const record = await Attendance.findOneAndUpdate(
+      accessFilter,
       { students },
       { new: true, runValidators: true }
     );
@@ -179,14 +206,11 @@ exports.updateAttendance = async (req, res, next) => {
 // @route DELETE /api/attendance/:id (future use)
 exports.deleteAttendance = async (req, res, next) => {
   try {
-    const record = await Attendance.findById(req.params.id);
+    const accessFilter = String(req.user.role).toLowerCase() === "teacher"
+      ? { _id: req.params.id, teacher: req.user._id }
+      : { _id: req.params.id, markedBy: req.user._id };
+    const record = await Attendance.findOneAndDelete(accessFilter);
     if (!record) return res.status(404).json({ message: "Attendance record not found" });
-
-    if (String(req.user.role).toLowerCase() === 'cr' && String(record.markedBy) !== String(req.user._id)) {
-      return res.status(403).json({ message: 'You do not have permission to delete this attendance record' });
-    }
-
-    await Attendance.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Attendance record deleted" });
   } catch (err) {
     next(err);

@@ -43,6 +43,18 @@ const attendanceSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    teacher: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    classroom: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Classroom",
+      required: true,
+      index: true,
+    },
     students: {
       type: [studentRecordSchema],
       required: true,

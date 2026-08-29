@@ -4,7 +4,7 @@ const errorHandler = (err, req, res, next) => {
   // Mongoose duplicate key error
   if (err.code === 11000) {
     return res.status(409).json({
-      message: "Attendance already exists. Do not create duplicate records.",
+      message: "A record with these details already exists.",
     });
   }
 
