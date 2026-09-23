@@ -19,12 +19,18 @@ const classroomSchema = new mongoose.Schema(
       enum: ["A", "B", "C", "D", "E", "F"],
       required: true,
     },
+    cr: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true }
 );
 
 classroomSchema.index(
-  { year: 1, className: 1, section: 1 },
+  { teacher: 1, year: 1, className: 1, section: 1 },
   { unique: true }
 );
 

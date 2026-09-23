@@ -7,7 +7,7 @@ import Spinner from "../components/Spinner";
 import api from "../api/axios";
 import { YEARS, CLASSES, SECTIONS } from "../utils/rollNumbers";
 
-const emptyForm = { year: "", className: "", section: "" };
+const emptyForm = { year: "", className: "", section: "", crEmail: "" };
 
 const TeacherClasses = () => {
   const [classrooms, setClassrooms] = useState([]);
@@ -39,7 +39,7 @@ const TeacherClasses = () => {
       const payload = { ...form };
       if (editingId) await api.put(`/classes/${editingId}`, payload);
       else await api.post("/classes", payload);
-      toast.success(editingId ? "Class updated" : "Class created");
+      toast.success(editingId ? "Class link updated" : "Class linked to CR");
       resetForm();
       load();
     } catch (error) {
@@ -51,7 +51,7 @@ const TeacherClasses = () => {
 
   const editClass = (classroom) => {
     setEditingId(classroom._id);
-    setForm({ year: classroom.year, className: classroom.className, section: classroom.section });
+    setForm({ year: classroom.year, className: classroom.className, section: classroom.section, crEmail: classroom.cr?.email || "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -69,18 +69,19 @@ const TeacherClasses = () => {
   return <div className="min-h-screen bg-slate-50">
     <Topbar title="Classes & Students" />
     <main className="mx-auto max-w-6xl px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-semibold text-slate-800">Manage classes</h2><p className="mt-1 text-sm text-slate-500">Create and manage your classes and sections.</p></div><Link to="/teacher" className="text-sm font-medium text-brand-600">Dashboard</Link></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-2xl font-semibold text-slate-800">Link a class to a CR</h2><p className="mt-1 text-sm text-slate-500">Enter the CR's registered email and class details. The link is active immediately—no approval needed.</p></div><Link to="/teacher" className="text-sm font-medium text-brand-600">Dashboard</Link></div>
       <form onSubmit={saveClass} className="mt-7 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
-        <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-800">{editingId ? "Edit class" : "Add a class"}</h3>{editingId && <button type="button" onClick={resetForm} className="text-sm font-medium text-slate-500">Cancel edit</button>}</div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-800">{editingId ? "Update class link" : "Create class link"}</h3>{editingId && <button type="button" onClick={resetForm} className="text-sm font-medium text-slate-500">Cancel edit</button>}</div>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-sm text-slate-600">Year<select required name="year" value={form.year} onChange={updateForm} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"><option value="">Select year</option>{YEARS.map((year) => <option key={year}>{year}</option>)}</select></label>
           <label className="text-sm text-slate-600">Class<select required name="className" value={form.className} onChange={updateForm} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"><option value="">Select class</option>{CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label className="text-sm text-slate-600">Section<select required name="section" value={form.section} onChange={updateForm} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"><option value="">Select section</option>{SECTIONS.map((section) => <option key={section}>{section}</option>)}</select></label>
+          <label className="text-sm text-slate-600">CR email<input required type="email" name="crEmail" value={form.crEmail} onChange={updateForm} placeholder="cr@example.com" className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" /></label>
         </div>
-        <button disabled={saving} className="btn-brand mt-5 disabled:opacity-50">{saving ? <Spinner /> : <Save className="h-4 w-4" />}{editingId ? "Save class changes" : "Create class"}</button>
+        <button disabled={saving} className="btn-brand mt-5 disabled:opacity-50">{saving ? <Spinner /> : <Save className="h-4 w-4" />}{editingId ? "Save link" : "Link CR to class"}</button>
       </form>
 
-      <section className="mt-7"><div className="flex items-center gap-2"><Users className="h-5 w-5 text-brand-600" /><h3 className="font-semibold text-slate-800">Your classes</h3></div>{loading ? <div className="flex justify-center py-16"><Spinner /></div> : classrooms.length ? <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">{classrooms.map((classroom) => <article key={classroom._id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100"><div><h4 className="font-semibold text-slate-800">{classroom.className} · Section {classroom.section}</h4><p className="mt-1 text-sm text-slate-500">{classroom.year}</p></div><div className="mt-4 flex gap-3"><button onClick={() => editClass(classroom)} className="flex items-center gap-1 text-sm font-medium text-brand-600"><Edit2 className="h-4 w-4" /> Edit</button><button onClick={() => deleteClass(classroom)} className="flex items-center gap-1 text-sm font-medium text-rose-600"><Trash2 className="h-4 w-4" /> Delete</button></div></article>)}</div> : <div className="mt-4 rounded-2xl bg-white p-10 text-center text-sm text-slate-500 shadow-sm ring-1 ring-slate-100">Create your first class to begin reviewing attendance.</div>}</section>
+      <section className="mt-7"><div className="flex items-center gap-2"><Users className="h-5 w-5 text-brand-600" /><h3 className="font-semibold text-slate-800">Your class links</h3></div>{loading ? <div className="flex justify-center py-16"><Spinner /></div> : classrooms.length ? <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">{classrooms.map((classroom) => <article key={classroom._id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100"><div><h4 className="font-semibold text-slate-800">{classroom.className} · Section {classroom.section}</h4><p className="mt-1 text-sm text-slate-500">{classroom.year}</p></div><div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm"><p className="text-slate-400">Linked CR</p><p className="mt-1 font-medium text-slate-700">{classroom.cr?.name}</p><p className="text-xs text-slate-500">{classroom.cr?.email}</p></div><div className="mt-4 flex gap-3"><button onClick={() => editClass(classroom)} className="flex items-center gap-1 text-sm font-medium text-brand-600"><Edit2 className="h-4 w-4" /> Edit</button><button onClick={() => deleteClass(classroom)} className="flex items-center gap-1 text-sm font-medium text-rose-600"><Trash2 className="h-4 w-4" /> Delete</button></div></article>)}</div> : <div className="mt-4 rounded-2xl bg-white p-10 text-center text-sm text-slate-500 shadow-sm ring-1 ring-slate-100">Link a CR email to a class to start receiving attendance.</div>}</section>
     </main>
   </div>;
 };

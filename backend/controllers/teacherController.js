@@ -15,7 +15,7 @@ exports.getDashboard = async (req, res, next) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [classrooms, records, todayRecords] = await Promise.all([
-      Classroom.find({ teacher: req.user._id }).select("year className section"),
+      Classroom.find({ teacher: req.user._id }).select("year className section cr").populate("cr", "name email"),
       Attendance.find({ teacher: req.user._id })
         .sort({ date: -1, createdAt: -1 })
         .populate("markedBy", "name email"),
@@ -58,6 +58,7 @@ exports.getDashboard = async (req, res, next) => {
         year: classroom.year,
         className: classroom.className,
         section: classroom.section,
+        crName: classroom.cr?.name || "Linked CR",
       }));
 
     res.status(200).json({

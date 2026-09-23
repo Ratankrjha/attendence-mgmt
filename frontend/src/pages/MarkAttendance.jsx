@@ -252,7 +252,7 @@ const MarkAttendance = () => {
           <div className="mb-5 flex justify-center"><Spinner /></div>
         ) : assignedClasses.length === 0 ? (
           <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            A teacher must create a class before attendance can be marked for it.
+            Your teacher must link your registered email to a class before you can mark attendance.
           </div>
         ) : null}
         {/* Stepper */}

@@ -52,10 +52,11 @@ exports.saveAttendance = async (req, res, next) => {
       year,
       className,
       section,
+      cr: req.user._id,
     });
     if (!classroom) {
       return res.status(403).json({
-        message: "This class has not been created by a teacher yet.",
+        message: "Your email is not linked to this class. Ask the teacher to link it using your registered email.",
       });
     }
 
@@ -144,9 +145,10 @@ exports.checkAttendanceExists = async (req, res, next) => {
       year,
       className,
       section,
+      cr: req.user._id,
     });
     if (!classroom) {
-      return res.status(403).json({ message: "This class has not been created by a teacher yet" });
+      return res.status(403).json({ message: "Your email is not linked to this class" });
     }
     const checkQuery = { date, classroom: classroom._id };
     const existing = await Attendance.findOne(checkQuery);
